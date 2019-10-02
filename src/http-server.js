@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 const router = express.Router()
-const auth = require('./auth')
+// const auth = require('./auth')
 var bodyParser = require('body-parser')
 var slideTrackerCaseBlockSlideCounts = require('./slide-tracking/CaseBlockSlideCount.js')
 
@@ -17,15 +17,18 @@ app.use(function (req, res, next) {
   next()
 }) */
 
-app.use(auth)
-
 app.use(function (req, res, next) {
+  // console.log('hello')
+  // console.log(JSON.stringify(req.headers))
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE')
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type')
   res.setHeader('Access-Control-Allow-Credentials', true)
+
   next()
 })
+
+// app.use(auth)
 
 /*
 // all routes prefixed with /slidetracker

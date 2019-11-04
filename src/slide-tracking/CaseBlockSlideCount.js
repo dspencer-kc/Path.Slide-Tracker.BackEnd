@@ -29,9 +29,12 @@ function caseblockslidecount (request, response, callback) {
 
       // Connect to the database
       var conLocnIDLookup = mysql.createConnection(mysqlConfig)
+
+      //  Callback
       conLocnIDLookup.query(strLocnIDLookupSQL, function (errLocnID, LocnIDLookupResult) {
         if (errLocnID) {
           response.send(errLocnID)
+          console.log('LOC ID Query Error')
           console.log(errLocnID)
         // On Error, close connection
         } else {
@@ -41,15 +44,24 @@ function caseblockslidecount (request, response, callback) {
           // console.log(LocnIDLookupResult)
           if (LocnIDLookupResult.length > 0) {
             strSlideDistributionLocation = LocnIDLookupResult[0].LocationID
+          } else if (strURLHash === '063d01cd') {
+            //  Look for MASTER hash to show all locations.
+            strSlideDistributionLocation = 'Slide Distribution'
           }
-          //  Query based on LOCNID
-          strSQL = '' +
-          CaseBlockSlideSQL('First', 'funPreviousWorkDayCutoffDateTime()', 'funCurrentDayFirstRunCutoff()', strSlideDistributionLocation) +
-          CaseBlockSlideSQL('Second', 'funCurrentDayFirstRunCutoff()', 'funCurrentDaySecondRunCutoff()', strSlideDistributionLocation) +
-          CaseBlockSlideSQL('Third', 'funCurrentDaySecondRunCutoff()', 'funCurrentDayThirdRunCutoff()', strSlideDistributionLocation) +
-          CaseBlockSlideSQL('Fourth', 'funCurrentDayThirdRunCutoff()', 'funCurrentDayFourthRunCutoff()', strSlideDistributionLocation) +
-          CaseBlockSlideSQL('Total', 'funPreviousWorkDayCutoffDateTime()', 'now()', strSlideDistributionLocation)
-          // console.log(strSQL)
+          //  Query based on LOCNID, If master hash show all locations.
+
+          if (strSlideDistributionLocation === 'Slide Distribution') {
+            strSQL = 'SELECT * FROM OPENLIS.qryBlockCountAllRunTimesBySortVal;'
+          } else {
+            strSQL = '' +
+            CaseBlockSlideSQL('First', 'funPreviousWorkDayCutoffDateTime()', 'funCurrentDayFirstRunCutoff()', strSlideDistributionLocation) +
+            CaseBlockSlideSQL('Second', 'funCurrentDayFirstRunCutoff()', 'funCurrentDaySecondRunCutoff()', strSlideDistributionLocation) +
+            CaseBlockSlideSQL('Third', 'funCurrentDaySecondRunCutoff()', 'funCurrentDayThirdRunCutoff()', strSlideDistributionLocation) +
+            CaseBlockSlideSQL('Fourth', 'funCurrentDayThirdRunCutoff()', 'funCurrentDayFourthRunCutoff()', strSlideDistributionLocation) +
+            CaseBlockSlideSQL('Total', 'funPreviousWorkDayCutoffDateTime()', 'now()', strSlideDistributionLocation)
+          }
+
+          console.log(strSQL)
 
           if (strSlideDistributionLocation !== null) {
             if (strSQL !== null) {
@@ -131,7 +143,46 @@ function CaseBlockSlideSQL (strRun, strStartTime, strCutoffTime, strSlideDistrib
   //  strCutoffTime (function call to calculate time, or datetime): funCurrentDayFirstRunCutoff()
   //  strSlideDistributionLocation: 'LOCNDERM'
 
-  let strSQL = `
+  let strSQL = ''
+
+  if (strSlideDistributionLocation === 'MASTER') {
+    //  MASTER Slide location - return all slide details.
+    strSQL = `
+    /*qry${strRun}RunCaseCount${strSlideDistributionLocation}*/
+    SELECT IFNULL(
+      (SELECT Count(qrySubBlockCountWLocation.subAccessionID)
+      FROM (SELECT subTblSlides.AccessionID AS subAccessionID, subTblSlideDistribution.SlideDistributionLocation
+              FROM tblSlides as subTblSlides
+              INNER JOIN   tblSlideDistribution as subTblSlideDistribution on subTblSlides.SlideDistributionID = subTblSlideDistribution.SlideDistributionID
+              WHERE subTblSlideDistribution.DTReadyForCourier >= ${strStartTime}
+              AND  subTblSlideDistribution.DTReadyForCourier < ${strCutoffTime}
+              GROUP BY subTblSlides.AccessionID, SlideDistributionLocation) as qrySubBlockCountWLocation
+      GROUP BY SlideDistributionLocation
+      )
+    , 0)  AS ${strRun}RunCaseCount;
+
+    /*qry${strRun}RunBlockCount${strSlideDistributionLocation}*/
+    SELECT IFNULL(
+      (SELECT Count(qrySubBlockCountWLocation.subBlockID)
+      FROM (SELECT subTblSlides.BlockID AS subBlockID, subTblSlideDistribution.SlideDistributionLocation
+              FROM tblSlides as subTblSlides
+              INNER JOIN   tblSlideDistribution as subTblSlideDistribution on subTblSlides.SlideDistributionID = subTblSlideDistribution.SlideDistributionID
+              WHERE subTblSlideDistribution.DTReadyForCourier >= ${strStartTime}
+              AND  subTblSlideDistribution.DTReadyForCourier < ${strCutoffTime}
+              GROUP BY subTblSlides.BlockID, SlideDistributionLocation) as qrySubBlockCountWLocation
+      GROUP BY SlideDistributionLocation
+      )
+    , 0)  AS ${strRun}RunBlockCount;
+
+    /*qry${strRun}RunSlideCount${strSlideDistributionLocation}*/
+    SELECT COUNT(subTblSlides.SlideID) AS ${strRun}RunSlideCount
+    FROM tblSlides as subTblSlides
+    INNER JOIN   tblSlideDistribution as subTblSlideDistribution on subTblSlides.SlideDistributionID = subTblSlideDistribution.SlideDistributionID
+    WHERE subTblSlideDistribution.DTReadyForCourier >= ${strStartTime} AND
+      subTblSlideDistribution.DTReadyForCourier < ${strCutoffTime};
+    `
+  } else {
+    strSQL = `
     /*qry${strRun}RunCaseCount${strSlideDistributionLocation}*/
     SELECT IFNULL(
       (SELECT Count(qrySubBlockCountWLocation.subAccessionID)
@@ -168,5 +219,7 @@ function CaseBlockSlideSQL (strRun, strStartTime, strCutoffTime, strSlideDistrib
       subTblSlideDistribution.DTReadyForCourier < ${strCutoffTime} AND
       SlideDistributionLocation = '${strSlideDistributionLocation}';
     `
+  }
+
   return strSQL
 }

@@ -28,7 +28,8 @@ function caseinquiry (request, response, callback) {
               tblSlides.LocationPrinted, 
               tblSlides.DTPrinted, 
               tblSlides.StainOrderDate, 
-              tblSlideDistribution.SlideTray 
+              tblSlideDistribution.SlideTray,
+              tblBlock.DateTimeEngraved
       FROM   (tblSlides 
               LEFT JOIN tblSlideDistribution 
                       ON tblSlides.SlideDistributionID = 

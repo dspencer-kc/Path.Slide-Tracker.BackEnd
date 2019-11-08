@@ -4,6 +4,7 @@ const router = express.Router()
 // const auth = require('./auth')
 var bodyParser = require('body-parser')
 var slideTrackerCaseBlockSlideCounts = require('./slide-tracking/CaseBlockSlideCount.js')
+var caseInquiry = require('./slide-tracking/CaseInquiry.js')
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
@@ -44,15 +45,22 @@ router.get('/', (request, response) => {
 app.post('/caseblockslidecount', (request, response) => {
   slideTrackerCaseBlockSlideCounts.caseblockslidecount(request, response, function (err, message) {
     if (err) return console.log(err)
-    console.log(request)
-    console.log(message)
-    
+    // console.log(request)
+    // console.log(message)
   })
 })
 
 app.post('/caseblockslidecountdetails', (request, response) => {
   slideTrackerCaseBlockSlideCounts.caseblockslidecountdetails(request, response, function (err, message) {
     if (err) return console.log(err)
+    console.log(message)
+  })
+})
+
+app.post('/caseinquiry', (request, response) => {
+  caseInquiry.caseinquiry(request, response, function (err, message) {
+    if (err) return console.log(err)
+    console.log(request)
     console.log(message)
   })
 })

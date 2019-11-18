@@ -61,6 +61,14 @@ function caseblockslidecount (request, response, callback) {
             CaseBlockSlideSQL('Total', 'funPreviousWorkDayCutoffDateTime()', 'now()', strSlideDistributionLocation)
           }
 
+          // Add SQL to pull in slide location status and comments.
+
+          // Location Status
+
+          // Location Specific Comments
+
+          // All Comments
+
           console.log(strSQL)
 
           if (strSlideDistributionLocation !== null) {

@@ -62,12 +62,14 @@ function caseblockslidecount (request, response, callback) {
           }
 
           // Add SQL to pull in slide location status and comments.
-
           // Location Status
+          // qryGetLoc Status
 
           // Location Specific Comments
 
           // All Comments
+
+          // Total Histo Number
 
           console.log(strSQL)
 
